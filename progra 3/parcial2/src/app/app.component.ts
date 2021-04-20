@@ -30,7 +30,7 @@ export class AppComponent {
   }
 
   public agregarOferente(){
-    if (this.nombre.trim().length>0)
+    if (this.nombre.trim().length>0 && this.monto!=null && this.monto>0)
       this.miobservable.next(new Oferente(this.nombre,this.monto));
   }
 
