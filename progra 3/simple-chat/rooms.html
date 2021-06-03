@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.0/dist/css/bootstrap.min.css">
+  <script src="https://code.jquery.com/jquery-3.5.1.min.js" ></script>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.0/dist/js/bootstrap.bundle.min.js"></script> 
+  <script src="/socket.io/socket.io.js"></script>
+</head>
+<body>
+  <div class="container">
+    <br>
+    <div class="jumbotron">
+      <div style="text-align: center;"><h1 id="roomTitle" class="display-10"></h1></div><br>
+      <h4>Conversacion:</h4>
+      <div id="messages" style="border: 1px solid #ccc !important; border-radius: 16px; padding: 16px; background-color:white;" > </div>
+      <br><hr>
+
+      <h4>Enviar Mesaje</h4>
+      <input id = "room" class="form-control" placeholder="Room" readonly type="hidden">
+      <br>
+      <label for="name">Nombre</label>
+      <input id = "name" class="form-control" placeholder="Nombre">
+      <br>
+      <label for="message">Mensaje</label>
+      <textarea id = "message" class="form-control" placeholder="Ingrese su mensaje aqui!"></textarea>
+      <br>
+      <button id="send" class="btn btn-success">Send</button>
+      <br><br>
+    </div>
+    
+  </div>
+  <script>
+    var socket = io();
+    $(() => {
+
+        $("#send").click(()=>{
+            sendMessage({name: $("#name").val(), room: $("#room").val() , message: $("#message").val()});
+            $("#message").val("");
+        })
+        var queryString=getUrlVars();
+        //var roomName=queryString["room"]; 
+        if (queryString["room"]!=undefined && queryString["room"]!=""){
+          $("#room").val(queryString["room"]);
+          $("#roomTitle").append(`Room: ${queryString["room"]}`)
+          getMessagesByRoom(queryString["room"]);
+        } else
+          getMessages();
+    })
+
+    function getUrlVars()
+    {
+        var vars = [], hash;
+        var hashes = window.location.href.slice(window.location.href.indexOf('?') + 1).split('&');
+        for(var i = 0; i < hashes.length; i++)
+        {
+            hash = hashes[i].split('=');
+            vars.push(hash[0]);
+            vars[hash[0]] = hash[1];
+        }
+        return vars;
+    }
+
+    socket.on('message', addMessages)
+
+    function addMessages(message){
+      console.log(message.room);
+      var queryString=getUrlVars();
+      if (message.room==queryString["room"])
+        $("#messages").append(`<b>${message.name}:</b> ${message.message}<br> `)
+    }
+
+    function getMessages(){
+      $.get('http://localhost:3001/messages', (data) => {
+        data.forEach(addMessages);
+      })
+    }
+
+    function getMessagesByRoom(room){
+      var url='http://localhost:3001/rooms/'+room;
+      $.get(url, (data) => {
+        data.forEach(addMessages);
+      })
+    }
+
+    function sendMessage(message){
+      $.post('http://localhost:3001/messages', message)
+    }
+  </script>
+ 
+</body>
+</html>
